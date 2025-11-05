@@ -1,0 +1,6 @@
+body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
+#controls { margin-bottom: 1em; }
+#question-list { margin-bottom: 2em; }
+.question-block { background: #fff; border: 1px solid #ddd; padding: 1em; margin-bottom: 1em; border-radius: 5px; }
+.option-btn { margin: 0.2em 0; display: block; width: 100%; text-align: left; }
+#answer-container { background: #e6ffe6; border: 1px solid #b2ffb2; padding: 1em; border-radius: 5px; }

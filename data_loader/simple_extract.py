@@ -67,7 +67,7 @@ class SimpleNCLEXExtractor:
                 # Look for "Detailed Answer: 78" pattern
                 detailed_match = re.search(r"Detailed Answer:\s*(\d+)", block, re.IGNORECASE)
                 if detailed_match:
-                    detailed_answer_page = int(detailed_match.group(1))
+                    detailed_answer_page = int(detailed_match.group(1)) + 20
 
                 questions.append(
                     {

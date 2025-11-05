@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>NCLEX MCQ Practice</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				max-width: 900px;
+				margin: 0 auto;
+				padding: 20px;
+				background-color: #f5f5f5;
+			}
+			.container {
+				background: white;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+			}
+			.question {
+				margin-bottom: 25px;
+				padding: 20px;
+				border: 1px solid #ddd;
+				border-radius: 8px;
+				background: #fafafa;
+			}
+			.question.answered {
+				border-left: 4px solid #28a745;
+			}
+			.question-header {
+				margin-bottom: 15px;
+			}
+			.question-text {
+				font-size: 16px;
+				line-height: 1.5;
+				margin-bottom: 15px;
+			}
+			.options {
+				margin: 15px 0;
+			}
+			.option {
+				margin: 8px 0;
+				padding: 12px;
+				background: #fff;
+				border: 2px solid #e9ecef;
+				border-radius: 6px;
+				cursor: pointer;
+				transition: all 0.3s ease;
+				position: relative;
+			}
+			.option:hover {
+				border-color: #007bff;
+				background: #f8f9fa;
+			}
+			.option.correct {
+				background: #d4edda;
+				border-color: #28a745;
+				color: #155724;
+			}
+			.option.incorrect {
+				background: #f8d7da;
+				border-color: #dc3545;
+				color: #721c24;
+			}
+			.option.correct-answer {
+				background: #d1ecf1;
+				border-color: #17a2b8;
+				color: #0c5460;
+			}
+			.option input {
+				margin-right: 12px;
+			}
+			.option-feedback {
+				font-size: 12px;
+				font-weight: bold;
+				margin-left: 25px;
+				margin-top: 5px;
+			}
+			.explanation {
+				margin-top: 15px;
+				padding: 15px;
+				background: #e9ecef;
+				border-radius: 5px;
+				border-left: 4px solid #007bff;
+				display: none;
+			}
+			.explanation.show {
+				display: block;
+				animation: slideDown 0.3s ease;
+			}
+			@keyframes slideDown {
+				from {
+					opacity: 0;
+					max-height: 0;
+				}
+				to {
+					opacity: 1;
+					max-height: 200px;
+				}
+			}
+			.explanation-header {
+				font-weight: bold;
+				color: #495057;
+				margin-bottom: 10px;
+				display: flex;
+				align-items: center;
+			}
+			.explanation-content {
+				color: #6c757d;
+				line-height: 1.5;
+			}
+			.toggle-explanation {
+				background: #17a2b8;
+				color: white;
+				border: none;
+				padding: 8px 15px;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 12px;
+				margin-top: 10px;
+			}
+			.toggle-explanation:hover {
+				background: #138496;
+			}
+			.btn {
+				background: #007bff;
+				color: white;
+				padding: 12px 24px;
+				border: none;
+				border-radius: 6px;
+				cursor: pointer;
+				margin: 8px;
+				font-size: 14px;
+				font-weight: 500;
+			}
+			.btn:hover {
+				background: #0056b3;
+			}
+			.btn:disabled {
+				background: #6c757d;
+				cursor: not-allowed;
+			}
+			.stats {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+				gap: 15px;
+				margin: 20px 0;
+			}
+			.stat-card {
+				background: #e9ecef;
+				padding: 15px;
+				border-radius: 5px;
+				text-align: center;
+			}
+			.result {
+				margin: 20px 0;
+				padding: 15px;
+				border-radius: 5px;
+			}
+			.success {
+				background: #d4edda;
+				color: #155724;
+				border: 1px solid #c3e6cb;
+			}
+			.error {
+				background: #f8d7da;
+				color: #721c24;
+				border: 1px solid #f5c6cb;
+			}
+			.loading {
+				text-align: center;
+				padding: 20px;
+				color: #6c757d;
+			}
+			.mode-selector {
+				margin: 20px 0;
+				padding: 15px;
+				background: #f8f9fa;
+				border-radius: 5px;
+			}
+			.mode-selector label {
+				margin-right: 20px;
+				font-weight: 500;
+			}
+			.practice-controls {
+				margin: 20px 0;
+				padding: 20px;
+				background: #f8f9fa;
+				border-radius: 8px;
+				border: 1px solid #e9ecef;
+			}
+			.control-row {
+				display: flex;
+				gap: 30px;
+				margin-bottom: 20px;
+				align-items: flex-end;
+			}
+			.control-row:last-child {
+				margin-bottom: 0;
+			}
+			.control-group {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				flex: 1;
+				min-width: 200px;
+			}
+			.control-group label {
+				font-weight: 600;
+				font-size: 14px;
+				color: #495057;
+				margin-bottom: 4px;
+			}
+			.control-input {
+				padding: 10px 14px;
+				border: 2px solid #e9ecef;
+				border-radius: 6px;
+				font-size: 14px;
+				transition: border-color 0.2s ease, box-shadow 0.2s ease;
+				background: white;
+			}
+			.control-input:focus {
+				outline: none;
+				border-color: #007bff;
+				box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+			}
+			.control-input:hover {
+				border-color: #b8daff;
+			}
+			.range-info {
+				color: #6c757d;
+				font-size: 12px;
+				margin-top: 4px;
+				font-style: italic;
+			}
+			.answer-not-found {
+				background: #fff3cd;
+				border: 1px solid #ffeaa7;
+				border-left: 4px solid #f39c12;
+				color: #856404;
+				padding: 12px;
+				border-radius: 5px;
+				margin-top: 10px;
+				font-size: 14px;
+			}
+			.answer-not-found .icon {
+				margin-right: 8px;
+			}
+			.controls-title {
+				font-size: 16px;
+				font-weight: 600;
+				color: #495057;
+				margin-bottom: 15px;
+				border-bottom: 2px solid #e9ecef;
+				padding-bottom: 8px;
+			}
+
+			/* Responsive design for smaller screens */
+			@media (max-width: 768px) {
+				.control-row {
+					flex-direction: column;
+					gap: 15px;
+				}
+				.control-group {
+					min-width: auto;
+				}
+				.practice-controls {
+					padding: 15px;
+				}
+			}
+			.progress-bar {
+				width: 100%;
+				height: 8px;
+				background: #e9ecef;
+				border-radius: 4px;
+				margin: 15px 0;
+				overflow: hidden;
+			}
+			.progress-fill {
+				height: 100%;
+				background: #28a745;
+				transition: width 0.3s ease;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>NCLEX MCQ Practice System</h1>
+
+			<div class="stats" id="stats">
+				<!-- Stats will be loaded here -->
+			</div>
+
+			<div class="mode-selector">
+				<label>
+					<input type="radio" name="practiceMode" value="instant" checked />
+					Instant Feedback Mode (See answers immediately)
+				</label>
+				<label>
+					<input type="radio" name="practiceMode" value="exam" />
+					Exam Mode (Submit all at once)
+				</label>
+			</div>
+
+			<div class="practice-controls">
+				<div class="controls-title">Question Set Configuration</div>
+
+				<div class="control-row">
+					<div class="control-group">
+						<label for="questionCount">Number of Questions:</label>
+						<select id="questionCount" class="control-input">
+							<option value="5">5 Questions</option>
+							<option value="10" selected>10 Questions</option>
+							<option value="15">15 Questions</option>
+							<option value="20">20 Questions</option>
+							<option value="25">25 Questions</option>
+							<option value="30">30 Questions</option>
+							<option value="50">50 Questions</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="control-row">
+					<div class="control-group">
+						<label for="startQuestion">Start From Question:</label>
+						<input
+							type="number"
+							id="startQuestion"
+							class="control-input"
+							value="1"
+							min="1"
+							placeholder="Enter question number"
+						/>
+						<small id="questionRangeInfo" class="range-info">Total questions available: Loading...</small>
+					</div>
+				</div>
+			</div>
+
+			<div>
+				<button class="btn" onclick="loadQuestions()">Start Practice</button>
+				<button class="btn" onclick="loadMistakes()">Practice Mistakes</button>
+				<button class="btn" onclick="showReport()">View Report</button>
+				<button class="btn" onclick="showSessions()">View Sessions</button>
+			</div>
+
+			<div id="progress-container" style="display: none">
+				<div class="progress-bar">
+					<div class="progress-fill" id="progress-fill"></div>
+				</div>
+				<p id="progress-text">0 of 0 questions answered</p>
+			</div>
+
+			<div id="questions-container">
+				<!-- Questions will be loaded here -->
+			</div>
+
+			<div id="result-container">
+				<!-- Results will be shown here -->
+			</div>
+		</div>
+
+		<script>
+			let currentQuestions = [];
+			let currentAnswers = {};
+			let currentPage = 1;
+			let instantFeedbackMode = true;
+			let answeredCount = 0;
+
+			async function loadStats() {
+				try {
+					const response = await fetch("/stats/");
+					const stats = await response.json();
+					document.getElementById("stats").innerHTML = `
+                    <div class="stat-card">
+                        <h3>${stats.total_questions}</h3>
+                        <p>Total Questions</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${stats.total_answers}</h3>
+                        <p>Available Answers</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${stats.total_practice_sessions}</h3>
+                        <p>Practice Sessions</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${stats.unique_mistakes}</h3>
+                        <p>Unique Mistakes</p>
+                    </div>
+                `;
+
+					// Update the question range info
+					updateQuestionRangeInfo(stats.total_questions);
+				} catch (error) {
+					console.error("Error loading stats:", error);
+				}
+			}
+
+			function updateQuestionRangeInfo(totalQuestions) {
+				const infoElement = document.getElementById("questionRangeInfo");
+				if (infoElement) {
+					infoElement.textContent = `Total questions available: ${totalQuestions}`;
+				}
+			}
+
+			function updatePracticeMode() {
+				const mode = document.querySelector('input[name="practiceMode"]:checked').value;
+				instantFeedbackMode = mode === "instant";
+			}
+
+			async function loadQuestions() {
+				try {
+					// Validate inputs first
+					if (!validateQuestionRange()) {
+						showError("Please enter a valid question range");
+						return;
+					}
+
+					updatePracticeMode();
+					showLoading();
+
+					// Get user selections
+					const questionCount = parseInt(document.getElementById("questionCount").value);
+					const startQuestion = parseInt(document.getElementById("startQuestion").value);
+					const offset = Math.max(0, startQuestion - 1); // Convert to 0-based offset
+
+					const endpoint = instantFeedbackMode ? "/questions-with-answers/" : "/questions/";
+					const response = await fetch(`${endpoint}?page_size=${questionCount}&offset=${offset}`);
+
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+
+					currentQuestions = await response.json();
+
+					if (currentQuestions.length === 0) {
+						showError(
+							`No questions found starting from question ${startQuestion}. Please try a lower starting number.`
+						);
+						return;
+					}
+
+					currentAnswers = {};
+					answeredCount = 0;
+
+					displayQuestions();
+					updateProgress();
+				} catch (error) {
+					console.error("Error loading questions:", error);
+					showError("Failed to load questions. Please check your question range and try again.");
+				}
+			}
+
+			async function loadMistakes() {
+				try {
+					updatePracticeMode();
+					showLoading();
+
+					const response = await fetch("/practice-mistakes/");
+					currentQuestions = await response.json();
+					currentAnswers = {};
+					answeredCount = 0;
+
+					displayQuestions();
+					updateProgress();
+				} catch (error) {
+					console.error("Error loading mistakes:", error);
+					showError("Failed to load mistake questions");
+				}
+			}
+
+			function showLoading() {
+				const container = document.getElementById("questions-container");
+				container.innerHTML = '<div class="loading">Loading questions...</div>';
+			}
+
+			function displayQuestions() {
+				const container = document.getElementById("questions-container");
+				const questionCount = parseInt(document.getElementById("questionCount").value);
+				const startQuestion = parseInt(document.getElementById("startQuestion").value);
+				const endQuestion = startQuestion + questionCount - 1;
+
+				container.innerHTML = `<h2>Practice Questions ${startQuestion}-${endQuestion} (${questionCount} questions)</h2>`;
+
+				document.getElementById("progress-container").style.display = "block";
+
+				currentQuestions.forEach((questionData, index) => {
+					const question = questionData.question || questionData;
+					const detailedAnswer = questionData.detailed_answer;
+					const startQuestion = parseInt(document.getElementById("startQuestion").value);
+					const actualQuestionNumber = startQuestion + index;
+
+					const questionDiv = document.createElement("div");
+					questionDiv.className = "question";
+					questionDiv.id = `question-${question.id}`;
+
+					questionDiv.innerHTML = `
+                    <div class="question-header">
+                        <h3>Question ${actualQuestionNumber}</h3>
+                        <small>Page ${question.page_number}, Q${question.question_number} (ID: ${question.id})</small>
+                    </div>
+                    <div class="question-text">${question.question_text}</div>
+                    <div class="options">
+                        <div class="option" onclick="selectOption(${question.id}, 'A')">
+                            <input type="radio" name="q${question.id}" value="A" id="q${question.id}a">
+                            <label for="q${question.id}a">A. ${question.options.A}</label>
+                            <div class="option-feedback" id="feedback-${question.id}-A"></div>
+                        </div>
+                        <div class="option" onclick="selectOption(${question.id}, 'B')">
+                            <input type="radio" name="q${question.id}" value="B" id="q${question.id}b">
+                            <label for="q${question.id}b">B. ${question.options.B}</label>
+                            <div class="option-feedback" id="feedback-${question.id}-B"></div>
+                        </div>
+                        <div class="option" onclick="selectOption(${question.id}, 'C')">
+                            <input type="radio" name="q${question.id}" value="C" id="q${question.id}c">
+                            <label for="q${question.id}c">C. ${question.options.C}</label>
+                            <div class="option-feedback" id="feedback-${question.id}-C"></div>
+                        </div>
+                        <div class="option" onclick="selectOption(${question.id}, 'D')">
+                            <input type="radio" name="q${question.id}" value="D" id="q${question.id}d">
+                            <label for="q${question.id}d">D. ${question.options.D}</label>
+                            <div class="option-feedback" id="feedback-${question.id}-D"></div>
+                        </div>
+                    </div>
+                    <div class="explanation" id="explanation-${question.id}">
+                        <div class="explanation-header">
+                            <span>💡 Explanation</span>
+                        </div>
+                        <div class="explanation-content" id="explanation-content-${question.id}">
+                            ${
+								detailedAnswer
+									? `
+                                <strong>Correct Answer: ${detailedAnswer.answer}</strong><br><br>
+                                <strong>Rationale:</strong><br>
+                                ${detailedAnswer.rationale}
+                            `
+									: "Select an answer to see explanation..."
+							}
+                        </div>
+                    </div>
+                    ${
+						instantFeedbackMode
+							? ""
+							: '<button class="toggle-explanation" onclick="toggleExplanation(' +
+							  question.id +
+							  ')">Show Explanation</button>'
+					}
+                `;
+					container.appendChild(questionDiv);
+				});
+
+				if (!instantFeedbackMode) {
+					const submitBtn = document.createElement("button");
+					submitBtn.className = "btn";
+					submitBtn.textContent = "Submit All Answers";
+					submitBtn.onclick = submitAnswers;
+					submitBtn.id = "submit-btn";
+					container.appendChild(submitBtn);
+				}
+			}
+
+			async function selectOption(questionId, selectedAnswer) {
+				const radio = document.getElementById(`q${questionId}${selectedAnswer.toLowerCase()}`);
+				radio.checked = true;
+
+				// Store the answer
+				currentAnswers[questionId] = selectedAnswer;
+
+				if (instantFeedbackMode) {
+					await checkAnswerInstantly(questionId, selectedAnswer);
+				}
+
+				updateProgress();
+			}
+
+			async function checkAnswerInstantly(questionId, selectedAnswer) {
+				try {
+					// Find the question data
+					const questionData = currentQuestions.find((q) => (q.question || q).id === questionId);
+					let detailedAnswer = questionData.detailed_answer;
+
+					// If we don't have the answer, fetch it
+					if (!detailedAnswer) {
+						const response = await fetch(`/question/${questionId}/answer`);
+						if (response.ok) {
+							detailedAnswer = await response.json();
+						} else if (response.status === 404) {
+							// Handle 404 - answer not found
+							showAnswerNotFound(questionId, selectedAnswer);
+							return;
+						} else {
+							throw new Error(`HTTP error! status: ${response.status}`);
+						}
+					}
+
+					if (detailedAnswer) {
+						const correctAnswer = detailedAnswer.answer.toUpperCase();
+						const isCorrect = selectedAnswer.toUpperCase() === correctAnswer;
+
+						// Update visual feedback
+						updateOptionStyles(questionId, selectedAnswer, correctAnswer, isCorrect);
+
+						// Show explanation
+						showExplanation(questionId, detailedAnswer);
+
+						// Mark question as answered
+						const questionDiv = document.getElementById(`question-${questionId}`);
+						questionDiv.classList.add("answered");
+
+						// Increment answered count if this is the first time answering this question
+						if (!currentAnswers[questionId + "_answered"]) {
+							currentAnswers[questionId + "_answered"] = true;
+							answeredCount++;
+						}
+					}
+				} catch (error) {
+					console.error("Error checking answer:", error);
+					showAnswerNotFound(questionId, selectedAnswer, "Error occurred while fetching answer");
+				}
+			}
+
+			function updateOptionStyles(questionId, selectedAnswer, correctAnswer, isCorrect) {
+				// Reset all options for this question
+				["A", "B", "C", "D"].forEach((option) => {
+					const optionDiv = document
+						.querySelector(`#q${questionId}${option.toLowerCase()}`)
+						.closest(".option");
+					optionDiv.classList.remove("correct", "incorrect", "correct-answer");
+
+					const feedback = document.getElementById(`feedback-${questionId}-${option}`);
+					feedback.textContent = "";
+				});
+
+				// Style the selected option
+				const selectedOptionDiv = document
+					.querySelector(`#q${questionId}${selectedAnswer.toLowerCase()}`)
+					.closest(".option");
+				const selectedFeedback = document.getElementById(`feedback-${questionId}-${selectedAnswer}`);
+
+				if (isCorrect) {
+					selectedOptionDiv.classList.add("correct");
+					selectedFeedback.textContent = "✓ Correct!";
+				} else {
+					selectedOptionDiv.classList.add("incorrect");
+					selectedFeedback.textContent = "✗ Incorrect";
+
+					// Highlight the correct answer
+					const correctOptionDiv = document
+						.querySelector(`#q${questionId}${correctAnswer.toLowerCase()}`)
+						.closest(".option");
+					correctOptionDiv.classList.add("correct-answer");
+					const correctFeedback = document.getElementById(`feedback-${questionId}-${correctAnswer}`);
+					correctFeedback.textContent = "✓ Correct Answer";
+				}
+			}
+
+			function showExplanation(questionId, detailedAnswer) {
+				const explanationDiv = document.getElementById(`explanation-${questionId}`);
+				const contentDiv = document.getElementById(`explanation-content-${questionId}`);
+
+				contentDiv.innerHTML = `
+                <strong>Correct Answer: ${detailedAnswer.answer}</strong><br><br>
+                <strong>Rationale:</strong><br>
+                ${detailedAnswer.rationale}
+            `;
+
+				explanationDiv.classList.add("show");
+			}
+
+			function showAnswerNotFound(questionId, selectedAnswer, customMessage = null) {
+				const explanationDiv = document.getElementById(`explanation-${questionId}`);
+				const contentDiv = document.getElementById(`explanation-content-${questionId}`);
+
+				// Mark the selected option with a neutral style
+				const selectedOptionDiv = document
+					.querySelector(`#q${questionId}${selectedAnswer.toLowerCase()}`)
+					.closest(".option");
+				selectedOptionDiv.style.backgroundColor = "#e2e3e5";
+				selectedOptionDiv.style.borderColor = "#adb5bd";
+
+				const selectedFeedback = document.getElementById(`feedback-${questionId}-${selectedAnswer}`);
+				selectedFeedback.textContent = "Answer recorded";
+				selectedFeedback.style.color = "#6c757d";
+
+				// Show answer not found message
+				contentDiv.innerHTML = `
+                <div class="answer-not-found">
+                    <span class="icon">⚠️</span>
+                    <strong>Answer Not Available</strong><br><br>
+                    ${customMessage || "The detailed answer for this question is not found in our database."}<br><br>
+                    <em>Please refer to your source material or textbook for the correct answer and explanation.</em><br><br>
+                    <small>Question ID: ${questionId} | Your answer: ${selectedAnswer}</small>
+                </div>
+            `;
+
+				explanationDiv.classList.add("show");
+
+				// Mark question as answered
+				const questionDiv = document.getElementById(`question-${questionId}`);
+				questionDiv.classList.add("answered");
+
+				// Increment answered count if this is the first time answering this question
+				if (!currentAnswers[questionId + "_answered"]) {
+					currentAnswers[questionId + "_answered"] = true;
+					answeredCount++;
+				}
+			}
+
+			function toggleExplanation(questionId) {
+				const explanationDiv = document.getElementById(`explanation-${questionId}`);
+				explanationDiv.classList.toggle("show");
+			}
+
+			function updateProgress() {
+				const totalQuestions = currentQuestions.length;
+				const answeredQuestions = Object.keys(currentAnswers).filter(
+					(key) => !key.includes("_answered")
+				).length;
+
+				const progressFill = document.getElementById("progress-fill");
+				const progressText = document.getElementById("progress-text");
+
+				const percentage = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
+
+				progressFill.style.width = `${percentage}%`;
+				progressText.textContent = `${answeredQuestions} of ${totalQuestions} questions answered`;
+			}
+
+			async function submitAnswers() {
+				const answers = [];
+
+				Object.keys(currentAnswers).forEach((questionId) => {
+					if (!questionId.includes("_answered")) {
+						answers.push({
+							question_id: parseInt(questionId),
+							user_answer: currentAnswers[questionId],
+						});
+					}
+				});
+
+				if (answers.length === 0) {
+					showError("Please answer at least one question");
+					return;
+				}
+
+				try {
+					const response = await fetch("/submit/", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify(answers),
+					});
+
+					const result = await response.json();
+					showResult(result);
+					loadStats(); // Refresh stats
+				} catch (error) {
+					console.error("Error submitting answers:", error);
+					showError("Failed to submit answers");
+				}
+			}
+
+			function showResult(result) {
+				const container = document.getElementById("result-container");
+				const percentage = ((result.score / result.total) * 100).toFixed(1);
+
+				container.innerHTML = `
+                <div class="result success">
+                    <h3>Practice Session Complete!</h3>
+                    <p><strong>Score:</strong> ${result.score} out of ${result.total} (${percentage}%)</p>
+                    <p><strong>Session ID:</strong> ${result.id}</p>
+                    <p><strong>Started:</strong> ${new Date(result.started_at).toLocaleString()}</p>
+                </div>
+            `;
+			}
+
+			async function showReport() {
+				try {
+					const response = await fetch("/report/");
+					const report = await response.json();
+
+					const container = document.getElementById("result-container");
+					container.innerHTML = `
+                    <div class="result">
+                        <h3>Overall Performance Report</h3>
+                        <p><strong>Total Questions Answered:</strong> ${report.total_questions_answered}</p>
+                        <p><strong>Correct Answers:</strong> ${report.correct_answers}</p>
+                        <p><strong>Wrong Answers:</strong> ${report.wrong_answers}</p>
+                        <p><strong>Accuracy:</strong> ${report.accuracy_percentage}%</p>
+                        <p><strong>Total Sessions:</strong> ${report.total_sessions}</p>
+                        <p><strong>Average Score:</strong> ${report.average_score}</p>
+                    </div>
+                `;
+				} catch (error) {
+					console.error("Error loading report:", error);
+					showError("Failed to load report");
+				}
+			}
+
+			async function showSessions() {
+				try {
+					const response = await fetch("/sessions/");
+					const sessions = await response.json();
+
+					const container = document.getElementById("result-container");
+					let html = '<div class="result"><h3>Recent Practice Sessions</h3>';
+
+					sessions.forEach((session) => {
+						const percentage = ((session.score / session.total) * 100).toFixed(1);
+						html += `
+                        <p><strong>Session ${session.id}:</strong> 
+                        ${session.score}/${session.total} (${percentage}%) - 
+                        ${new Date(session.started_at).toLocaleString()}</p>
+                    `;
+					});
+
+					html += "</div>";
+					container.innerHTML = html;
+				} catch (error) {
+					console.error("Error loading sessions:", error);
+					showError("Failed to load sessions");
+				}
+			}
+
+			function showError(message) {
+				const container = document.getElementById("result-container");
+				container.innerHTML = `
+                <div class="result error">
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+			}
+
+			// Validation and helper functions
+			function validateQuestionRange() {
+				const startQuestion = parseInt(document.getElementById("startQuestion").value);
+				const questionCount = parseInt(document.getElementById("questionCount").value);
+
+				if (startQuestion < 1) {
+					document.getElementById("startQuestion").value = 1;
+					return false;
+				}
+
+				return true;
+			}
+
+			// Add event listeners for validation
+			document.addEventListener("DOMContentLoaded", function () {
+				const modeRadios = document.querySelectorAll('input[name="practiceMode"]');
+				modeRadios.forEach((radio) => {
+					radio.addEventListener("change", updatePracticeMode);
+				});
+
+				// Add validation to start question input
+				const startQuestionInput = document.getElementById("startQuestion");
+				startQuestionInput.addEventListener("blur", validateQuestionRange);
+				startQuestionInput.addEventListener("input", function () {
+					if (this.value < 1) {
+						this.value = 1;
+					}
+				});
+			});
+
+			// Load stats on page load
+			loadStats();
+		</script>
+	</body>
+</html>
