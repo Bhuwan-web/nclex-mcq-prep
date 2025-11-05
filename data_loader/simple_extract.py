@@ -29,20 +29,24 @@ class SimpleNCLEXExtractor:
         """Extract all questions from a single page."""
         questions = []
 
-        # Split by question numbers
-        question_blocks = re.split(r"(?=\d+\.)", page_text)
+        # Split by question numbers - look for number at start of line or after whitespace
+        question_blocks = re.split(r"(?=(?:^|\n)\s*\d+\.)", page_text)
 
         for block in question_blocks:
             if not block.strip():
                 continue
 
-            # Extract question number and text
-            question_match = re.search(r"^(\d+)\.\s+(.*?)(?=❍\s*A\.)", block, re.DOTALL)
+            # Extract question number and text - handle whitespace at start
+            question_match = re.search(r"^\s*(\d+)\.\s+(.*?)(?=❍\s*A\.)", block, re.DOTALL)
             if not question_match:
                 continue
 
             question_number = int(question_match.group(1))
             question_text = self.clean_text(question_match.group(2))
+
+            # Debug: Print question numbers to verify parsing
+            if question_number <= 10 or question_number % 50 == 0:
+                print(f"  Parsed question {question_number}: {question_text[:50]}...")
 
             # Extract options
             options = {}
@@ -53,8 +57,8 @@ class SimpleNCLEXExtractor:
                 option_text = self.clean_text(option_match.group(2))
                 options[letter] = option_text
 
-            # Only add if we have all 4 options
-            if len(options) == 4:
+            # Only add if we have all 4 options and valid question number (1-250)
+            if len(options) == 4 and 1 <= question_number <= 250:
                 # Extract page references using the same patterns as extract_questions.py
                 quick_answer_page = None
                 detailed_answer_page = None
@@ -89,8 +93,8 @@ class SimpleNCLEXExtractor:
         """Extract detailed answers from a page."""
         answers = []
 
-        # Pattern for "1. Answer B is correct. Rationale..."
-        pattern = r"(\d+)\.\s*Answer\s+([A-D])\s+is\s+correct\.\s*(.*?)(?=\d+\.\s*Answer\s+[A-D]\s+is\s+correct|$)"
+        # Pattern for "1. Answer B is correct. Rationale..." - handle multi-digit numbers
+        pattern = r"(?:^|\n)\s*(\d+)\.\s*Answer\s+([A-D])\s+is\s+correct\.\s*(.*?)(?=(?:^|\n)\s*\d+\.\s*Answer\s+[A-D]\s+is\s+correct|$)"
 
         matches = re.findall(pattern, page_text, re.DOTALL | re.IGNORECASE)
 
@@ -99,7 +103,9 @@ class SimpleNCLEXExtractor:
                 question_num = int(q_num)
                 clean_rationale = self.clean_text(rationale)
 
-                if len(clean_rationale) > 10:  # Must have substantial rationale
+                if (
+                    len(clean_rationale) > 10 and 1 <= question_num <= 250
+                ):  # Must have substantial rationale and valid question number
                     answers.append(
                         {
                             "page_number": page_num,
