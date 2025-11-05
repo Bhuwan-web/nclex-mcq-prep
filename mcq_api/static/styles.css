@@ -162,19 +162,20 @@ input[name="practiceMode"]:checked + .practice-mode-card .mode-indicator::after 
     gap: 12px;
 }
 
-/* Hover state - Light blue */
-.question-option:hover:not(.correct):not(.incorrect):not(.correct-answer) {
+/* Hover state - Light blue (only when no feedback or selected state is active) */
+.question-option:hover:not(.correct):not(.incorrect):not(.correct-answer):not(.selected) {
     border-color: #60a5fa;
     background: #f0f9ff;
     transform: translateX(4px);
     box-shadow: 0 4px 12px rgba(96, 165, 250, 0.15);
 }
 
-/* Selected but not yet checked - Medium blue */
-.question-option.selected:not(.correct):not(.incorrect):not(.correct-answer) {
-    border-color: #3b82f6;
-    background: #dbeafe;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+/* Selected but not yet checked - Medium blue (higher priority than hover) */
+.question-option.selected {
+    border-color: #3b82f6 !important;
+    background: #dbeafe !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2) !important;
+    transform: translateX(2px) !important;
 }
 
 /* Correct answer - Green */

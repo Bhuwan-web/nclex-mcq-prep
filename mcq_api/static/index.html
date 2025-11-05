@@ -49,7 +49,7 @@
 			};
 		</script>
 		<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-		<link href="styles.css" rel="stylesheet" />
+		<link href="/static/styles.css" rel="stylesheet" />
 		<style>
 			/* Essential page-specific overrides */
 			.glass-effect {
@@ -199,84 +199,7 @@
 				box-shadow: 0 4px 12px rgba(30, 64, 175, 0.15);
 			}
 
-			/* Question Option Styles - Improved color differentiation */
-			.question-option {
-				margin: 12px 0;
-				padding: 16px;
-				background: white;
-				border: 2px solid #e5e7eb;
-				border-radius: 12px;
-				cursor: pointer;
-				transition: all 0.3s ease;
-				position: relative;
-				display: flex;
-				align-items: flex-start;
-				gap: 12px;
-			}
-
-			/* Hover state - Light blue */
-			.question-option:hover {
-				border-color: #60a5fa;
-				background: #f0f9ff;
-				transform: translateX(4px);
-				box-shadow: 0 4px 12px rgba(96, 165, 250, 0.15);
-			}
-
-			/* Selected but not yet checked - Medium blue */
-			.question-option.selected {
-				border-color: #3b82f6;
-				background: #dbeafe;
-				box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-			}
-
-			/* Correct answer - Green */
-			.question-option.correct {
-				border-color: #10b981;
-				background: #d1fae5;
-				color: #065f46;
-			}
-
-			/* Incorrect answer - Red */
-			.question-option.incorrect {
-				border-color: #ef4444;
-				background: #fee2e2;
-				color: #991b1b;
-			}
-
-			/* Correct answer highlight (when user was wrong) - Teal */
-			.question-option.correct-answer {
-				border-color: #14b8a6;
-				background: #ccfbf1;
-				color: #134e4a;
-			}
-
-			.question-option input[type="radio"] {
-				width: 20px;
-				height: 20px;
-				margin: 0;
-				accent-color: #1e40af;
-			}
-
-			.option-feedback {
-				font-size: 14px;
-				font-weight: 600;
-				margin-top: 8px;
-				display: flex;
-				align-items: center;
-				gap: 6px;
-			}
-
-			.option-feedback.correct {
-				color: #059669;
-			}
-
-			.option-feedback.incorrect {
-				color: #dc2626;
-			}
-
-			.option-feedback.correct-answer {
-				color: #0891b2;
-			}
+			/* Question option styles are now in external styles.css to avoid conflicts */
 
 			/* Question Card Styles */
 			.question-card {
@@ -447,24 +370,25 @@
 				transition: all 0.3s ease;
 				position: relative;
 			}
-			.option:hover {
+			/* Legacy option styles - disabled to prevent conflicts */
+			.option:hover:not(.correct):not(.incorrect):not(.correct-answer) {
 				border-color: #007bff;
 				background: #f8f9fa;
 			}
 			.option.correct {
-				background: #d4edda;
-				border-color: #28a745;
-				color: #155724;
+				background: #d4edda !important;
+				border-color: #28a745 !important;
+				color: #155724 !important;
 			}
 			.option.incorrect {
-				background: #f8d7da;
-				border-color: #dc3545;
-				color: #721c24;
+				background: #f8d7da !important;
+				border-color: #dc3545 !important;
+				color: #721c24 !important;
 			}
 			.option.correct-answer {
-				background: #d1ecf1;
-				border-color: #17a2b8;
-				color: #0c5460;
+				background: #d1ecf1 !important;
+				border-color: #17a2b8 !important;
+				color: #0c5460 !important;
 			}
 			.option input {
 				margin-right: 12px;
@@ -1333,7 +1257,7 @@
 							${["A", "B", "C", "D"]
 								.map(
 									(option) => `
-								<div class="question-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer transition-all duration-300 hover:border-medical-blue hover:bg-blue-50" 
+								<div class="question-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer transition-all duration-300" 
 									 onclick="selectOption(${question.id}, '${option}')" id="option-${question.id}-${option}">
 									<div class="flex items-center space-x-3">
 										<div class="option-indicator w-5 h-5 border-2 border-gray-400 rounded-full flex items-center justify-center">
