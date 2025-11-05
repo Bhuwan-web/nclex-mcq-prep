@@ -8,7 +8,9 @@ from .models import Question, PracticeSession, PracticeAnswer, Mistake, Detailed
 from .schemas import (
     QuestionSchema,
     PracticeAnswerSchema,
+    PracticeAnswerWithFeedbackSchema,
     PracticeSessionSchema,
+    PracticeSessionWithFeedbackSchema,
     MistakeSchema,
     OptionSchema,
     DetailedAnswerSchema,
@@ -99,14 +101,19 @@ def get_questions(
     return result
 
 
-@app.post("/submit/", response_model=PracticeSessionSchema)
+@app.post("/submit/", response_model=PracticeSessionWithFeedbackSchema)
 def submit_answers(answers: List[PracticeAnswerSchema], db: Session = Depends(get_db)):
+    """Submit practice answers and get detailed feedback with explanations."""
     session = PracticeSession(started_at=datetime.utcnow(), score=0, total=len(answers))
     db.add(session)
     db.commit()
     db.refresh(session)
+
     score = 0
+    feedback_answers = []
+
     for ans in answers:
+        # Get question details
         q = db.query(Question).filter(Question.id == ans.question_id).first()
         if not q:
             continue
@@ -115,8 +122,8 @@ def submit_answers(answers: List[PracticeAnswerSchema], db: Session = Depends(ge
         detailed_answer = (
             db.query(DetailedAnswer)
             .filter(
-                DetailedAnswer.page_number == q.page_number,
-                DetailedAnswer.question_number == q.question_number,
+                Question.page_number == ans.page_number,
+                DetailedAnswer.question_number == ans.question_number,
             )
             .first()
         )
@@ -124,7 +131,9 @@ def submit_answers(answers: List[PracticeAnswerSchema], db: Session = Depends(ge
         is_correct = detailed_answer and (
             ans.user_answer.upper() == detailed_answer.answer.upper()
         )
+        correct_answer = detailed_answer.answer if detailed_answer else "N/A"
 
+        # Save practice answer
         pa = PracticeAnswer(
             session_id=session.id,
             question_id=ans.question_id,
@@ -133,6 +142,7 @@ def submit_answers(answers: List[PracticeAnswerSchema], db: Session = Depends(ge
         )
         db.add(pa)
 
+        # Track mistakes
         if not is_correct:
             mistake = db.query(Mistake).filter(Mistake.question_id == ans.question_id).first()
             if mistake:
@@ -146,22 +156,51 @@ def submit_answers(answers: List[PracticeAnswerSchema], db: Session = Depends(ge
         else:
             score += 1
 
+        # Prepare feedback data
+        feedback_answers.append(
+            PracticeAnswerWithFeedbackSchema(
+                question_id=ans.question_id,
+                question_number=ans.question_number,
+                page_number=ans.page_number,
+                user_answer=ans.user_answer,
+                correct_answer=correct_answer,
+                is_correct=is_correct,
+                question=QuestionSchema(
+                    id=q.id,
+                    page_number=q.page_number,
+                    question_number=q.question_number,
+                    question_text=q.question_text,
+                    options=OptionSchema(A=q.option_a, B=q.option_b, C=q.option_c, D=q.option_d),
+                    quick_answer_page=q.quick_answer_page,
+                    detailed_answer_page=q.detailed_answer_page,
+                ),
+                detailed_answer=(
+                    DetailedAnswerSchema(
+                        id=detailed_answer.id,
+                        page_number=detailed_answer.page_number,
+                        question_number=detailed_answer.question_number,
+                        answer=detailed_answer.answer,
+                        rationale=detailed_answer.rationale,
+                    )
+                    if detailed_answer
+                    else None
+                ),
+            )
+        )
+
+    # Update session with final score
     session.score = score
+    accuracy_percentage = round((score / len(answers)) * 100, 2) if answers else 0
     db.commit()
     db.refresh(session)
 
-    session_answers = (
-        db.query(PracticeAnswer).filter(PracticeAnswer.session_id == session.id).all()
-    )
-    return PracticeSessionSchema(
+    return PracticeSessionWithFeedbackSchema(
         id=session.id,
         started_at=session.started_at.isoformat(),
         score=session.score,
         total=session.total,
-        answers=[
-            PracticeAnswerSchema(question_id=a.question_id, user_answer=a.user_answer)
-            for a in session_answers
-        ],
+        accuracy_percentage=accuracy_percentage,
+        answers=feedback_answers,
     )
 
 
@@ -296,16 +335,31 @@ def get_practice_sessions(limit: int = Query(10, ge=1, le=100), db: Session = De
         session_answers = (
             db.query(PracticeAnswer).filter(PracticeAnswer.session_id == session.id).all()
         )
+        # Get question details for each answer
+        enhanced_answers = []
+        for a in session_answers:
+            q = db.query(Question).filter(Question.id == a.question_id).first()
+            if q:
+                enhanced_answers.append(
+                    PracticeAnswerSchema(
+                        question_id=a.question_id,
+                        question_number=q.question_number,
+                        page_number=q.page_number,
+                        user_answer=a.user_answer,
+                    )
+                )
+
+        accuracy_percentage = (
+            round((session.score / session.total) * 100, 2) if session.total > 0 else 0
+        )
         result.append(
             PracticeSessionSchema(
                 id=session.id,
                 started_at=session.started_at.isoformat(),
                 score=session.score,
                 total=session.total,
-                answers=[
-                    PracticeAnswerSchema(question_id=a.question_id, user_answer=a.user_answer)
-                    for a in session_answers
-                ],
+                accuracy_percentage=accuracy_percentage,
+                answers=enhanced_answers,
             )
         )
     return result
