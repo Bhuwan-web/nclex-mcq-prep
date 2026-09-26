@@ -116,6 +116,18 @@ def read_root():
     return {"message": "NCLEX MCQ Practice API", "docs": "/docs"}
 
 
+@app.get("/login")
+def login_page():
+    """Serve the standalone sign-in page."""
+    return FileResponse(os.path.join(static_dir, "auth.html"))
+
+
+@app.get("/signup")
+def signup_page():
+    """Serve the standalone account creation page."""
+    return FileResponse(os.path.join(static_dir, "auth.html"))
+
+
 @app.get("/health")
 def health_check():
     """Simple health check endpoint."""

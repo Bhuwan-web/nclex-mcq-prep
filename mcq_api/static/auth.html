@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7f5">
+  <title>Sign in | NCLEX Practice Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/auth.css">
+  <script src="/static/auth.js" defer></script>
+</head>
+<body>
+  <main class="auth-layout">
+    <section class="welcome-panel" aria-label="About NCLEX Practice Hub">
+      <a class="brand" href="/" aria-label="NCLEX Practice Hub home"><span class="brand-icon">✳</span><span>NCLEX <b>Practice Hub</b></span></a>
+      <div class="welcome-copy">
+        <span class="eyebrow"><span class="live-dot"></span> YOUR NEXT CHAPTER STARTS HERE</span>
+        <h1>Confidence comes<br>from <em>practice.</em></h1>
+        <p>A calmer, more focused way to prepare for your NCLEX. Pick up where you left off and make every study session count.</p>
+        <div class="progress-card" aria-hidden="true">
+          <div class="card-top"><span class="mini-icon">✓</span><span>YOUR STUDY SPACE</span><span class="card-dots">•••</span></div>
+          <div class="card-title">Small steps. Stronger practice.</div>
+          <div class="progress-label"><span>Today’s focus</span><b>One question at a time</b></div>
+          <div class="progress-track"><span></span></div>
+          <div class="card-foot"><span>Build your momentum</span><span>✦</span></div>
+        </div>
+      </div>
+      <div class="welcome-bottom"><span>Made for your nursing journey</span><span>© NCLEX Practice Hub</span></div>
+    </section>
+
+    <section class="form-panel">
+      <div class="form-wrap">
+        <a class="mobile-brand" href="/">✳ <span>NCLEX <b>Practice Hub</b></span></a>
+        <div class="form-heading">
+          <div class="form-symbol" aria-hidden="true">✳</div>
+          <p class="eyebrow" id="form-eyebrow">WELCOME BACK</p>
+          <h2 id="form-title">Good to see you.</h2>
+          <p id="form-description">Sign in to keep your progress moving.</p>
+        </div>
+        <form id="auth-form" novalidate>
+          <label class="field" for="email"><span>Email address</span><input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></label>
+          <label class="field" for="password"><span>Password</span><span class="password-wrap"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required minlength="8"><button class="show-password" id="password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show</button></span></label>
+          <p class="password-hint" id="password-hint" hidden>Use at least 8 characters.</p>
+          <p class="error-message" id="error-message" role="alert" hidden></p>
+          <button class="submit-button" id="submit-button" type="submit"><span id="submit-label">Sign in</span><span aria-hidden="true">↗</span></button>
+        </form>
+        <p class="switch-copy"><span id="switch-question">New to the hub?</span> <a id="switch-link" href="/signup">Create an account</a></p>
+        <div class="secure-note"><span aria-hidden="true">▣</span> Your study progress stays private and secure.</div>
+        <a class="home-link" href="/">← Back to practice hub</a>
+      </div>
+      <div class="mobile-footer">Made for your nursing journey</div>
+    </section>
+  </main>
+</body>
+</html>
