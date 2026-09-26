@@ -1,4 +1,7 @@
 __pycache__/
 *.pyc
+.venv/
 *.pdf
 /data/
+.vercel
+.env*.local

@@ -179,6 +179,28 @@ unless you want to delete saved progress.
 -   `DATABASE_URL`: Database connection string (optional, defaults to SQLite)
 -   `HOST`: Server host (default: 0.0.0.0)
 -   `PORT`: Server port (default: 8000)
+-   `JWT_SECRET_KEY`: Required secret used to sign access tokens. Use a long random value and keep it private.
+-   `JWT_EXPIRE_MINUTES`: Token lifetime in minutes (default: 60).
+
+### Accounts and saved progress
+
+Create an account in the app with an email and password of at least eight
+characters. The API hashes passwords with Argon2 and uses signed JWT bearer
+tokens. Practice submissions, session history, reports, and mistakes are scoped
+to the signed-in account. `/auth/register`, `/auth/token`, and `/auth/me` manage
+accounts and tokens; progress endpoints require `Authorization: Bearer <token>`.
+
+Set `JWT_SECRET_KEY` before starting the app, for example with
+`python -c "import secrets; print(secrets.token_urlsafe(48))"`. For production,
+also set `DATABASE_URL` to a persistent PostgreSQL database. Local SQLite works
+for development, but Vercel's writable `/tmp` filesystem is temporary, so data
+written there can disappear when an instance is replaced or restarted.
+When running against PostgreSQL, app startup copies the bundled SQLite tables
+into PostgreSQL once using conflict-safe inserts. To enable Actions deployments,
+add a Vercel access token as
+the repository secret `VERCEL_TOKEN`, then set the repository variable
+`VERCEL_ACTIONS_ENABLED` to `true`. Deployments remain paused until CI has valid
+Vercel credentials.
 
 ### Database Configuration
 

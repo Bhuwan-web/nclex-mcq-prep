@@ -1,10 +1,9 @@
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 from .db import SessionLocal, init_db
-from .models import Question, PracticeSession, PracticeAnswer, Mistake, DetailedAnswer
+from .models import Question, PracticeSession, PracticeAnswer, DetailedAnswer, User, UserMistake
 from .schemas import (
     QuestionSchema,
     PracticeAnswerSchema,
@@ -16,10 +15,14 @@ from .schemas import (
     DetailedAnswerSchema,
     MCQWithAnswerSchema,
 )
-from typing import List, Optional
+from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
-import os
+import re
+from pydantic import BaseModel, Field
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import IntegrityError
+from .auth import create_access_token, get_current_user, password_hash
 
 app = FastAPI(
     title="NCLEX MCQ Practice API",
@@ -46,6 +49,55 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+class UserCreate(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class UserPublic(BaseModel):
+    id: int
+    email: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+@app.post("/auth/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
+def register_user(payload: UserCreate, db: Session = Depends(get_db)):
+    email = payload.email.strip().lower()
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        raise HTTPException(status_code=422, detail="A valid email address is required")
+    user = User(email=email, password_hash=password_hash.hash(payload.password))
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="An account with this email already exists")
+    db.refresh(user)
+    return UserPublic(id=user.id, email=user.email)
+
+
+@app.post("/auth/token", response_model=TokenResponse)
+def login_user(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    email = form.username.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
+    if user is None or not password_hash.verify(form.password, user.password_hash):
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return TokenResponse(access_token=create_access_token(user))
+
+
+@app.get("/auth/me", response_model=UserPublic)
+def read_current_user(user: User = Depends(get_current_user)):
+    return UserPublic(id=user.id, email=user.email)
 
 
 @app.on_event("startup")
@@ -102,9 +154,15 @@ def get_questions(
 
 
 @app.post("/submit/", response_model=PracticeSessionWithFeedbackSchema)
-def submit_answers(answers: List[PracticeAnswerSchema], db: Session = Depends(get_db)):
+def submit_answers(
+    answers: List[PracticeAnswerSchema],
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     """Submit practice answers and get detailed feedback with explanations."""
-    session = PracticeSession(started_at=datetime.utcnow(), score=0, total=len(answers))
+    session = PracticeSession(
+        started_at=datetime.utcnow(), score=0, total=len(answers), user_id=user.id
+    )
     db.add(session)
     db.commit()
     db.refresh(session)
@@ -144,13 +202,20 @@ def submit_answers(answers: List[PracticeAnswerSchema], db: Session = Depends(ge
 
         # Track mistakes
         if not is_correct:
-            mistake = db.query(Mistake).filter(Mistake.question_id == ans.question_id).first()
+            mistake = (
+                db.query(UserMistake)
+                .filter(UserMistake.user_id == user.id, UserMistake.question_id == ans.question_id)
+                .first()
+            )
             if mistake:
                 mistake.wrong_count += 1
                 mistake.last_wrong = datetime.utcnow()
             else:
-                mistake = Mistake(
-                    question_id=ans.question_id, wrong_count=1, last_wrong=datetime.utcnow()
+                mistake = UserMistake(
+                    user_id=user.id,
+                    question_id=ans.question_id,
+                    wrong_count=1,
+                    last_wrong=datetime.utcnow(),
                 )
                 db.add(mistake)
         else:
@@ -205,13 +270,14 @@ def submit_answers(answers: List[PracticeAnswerSchema], db: Session = Depends(ge
 
 
 @app.get("/report/")
-def get_report(db: Session = Depends(get_db)):
-    total = db.query(PracticeAnswer).count()
-    correct = db.query(PracticeAnswer).filter(PracticeAnswer.is_correct == True).count()
-    wrong = db.query(PracticeAnswer).filter(PracticeAnswer.is_correct == False).count()
+def get_report(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    user_answers = db.query(PracticeAnswer).join(PracticeSession).filter(PracticeSession.user_id == user.id)
+    total = user_answers.count()
+    correct = user_answers.filter(PracticeAnswer.is_correct.is_(True)).count()
+    wrong = user_answers.filter(PracticeAnswer.is_correct.is_(False)).count()
 
     # Get session statistics
-    sessions = db.query(PracticeSession).all()
+    sessions = db.query(PracticeSession).filter(PracticeSession.user_id == user.id).all()
     total_sessions = len(sessions)
     avg_score = sum(s.score for s in sessions) / total_sessions if total_sessions > 0 else 0
 
@@ -226,8 +292,13 @@ def get_report(db: Session = Depends(get_db)):
 
 
 @app.get("/mistakes/", response_model=List[MistakeSchema])
-def get_mistakes(db: Session = Depends(get_db)):
-    mistakes = db.query(Mistake).order_by(Mistake.wrong_count.desc()).all()
+def get_mistakes(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    mistakes = (
+        db.query(UserMistake)
+        .filter(UserMistake.user_id == user.id)
+        .order_by(UserMistake.wrong_count.desc())
+        .all()
+    )
     result = []
     for m in mistakes:
         q = m.question
@@ -304,9 +375,19 @@ def get_questions_with_answers(
 
 
 @app.get("/practice-mistakes/", response_model=List[QuestionSchema])
-def get_practice_mistakes(limit: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)):
+def get_practice_mistakes(
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     """Get questions that were answered incorrectly most frequently for practice."""
-    mistakes = db.query(Mistake).order_by(Mistake.wrong_count.desc()).limit(limit).all()
+    mistakes = (
+        db.query(UserMistake)
+        .filter(UserMistake.user_id == user.id)
+        .order_by(UserMistake.wrong_count.desc())
+        .limit(limit)
+        .all()
+    )
     result = []
     for m in mistakes:
         q = m.question
@@ -325,10 +406,18 @@ def get_practice_mistakes(limit: int = Query(10, ge=1, le=50), db: Session = Dep
 
 
 @app.get("/sessions/", response_model=List[PracticeSessionSchema])
-def get_practice_sessions(limit: int = Query(10, ge=1, le=100), db: Session = Depends(get_db)):
+def get_practice_sessions(
+    limit: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     """Get recent practice sessions."""
     sessions = (
-        db.query(PracticeSession).order_by(PracticeSession.started_at.desc()).limit(limit).all()
+        db.query(PracticeSession)
+        .filter(PracticeSession.user_id == user.id)
+        .order_by(PracticeSession.started_at.desc())
+        .limit(limit)
+        .all()
     )
     result = []
     for session in sessions:
@@ -391,12 +480,12 @@ def get_question_answer(question_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/stats/")
-def get_stats(db: Session = Depends(get_db)):
+def get_stats(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """Get database statistics."""
     total_questions = db.query(Question).count()
     total_answers = db.query(DetailedAnswer).count()
-    total_sessions = db.query(PracticeSession).count()
-    total_mistakes = db.query(Mistake).count()
+    total_sessions = db.query(PracticeSession).filter(PracticeSession.user_id == user.id).count()
+    total_mistakes = db.query(UserMistake).filter(UserMistake.user_id == user.id).count()
 
     return {
         "total_questions": total_questions,

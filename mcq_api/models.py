@@ -44,12 +44,22 @@ class DetailedAnswer(Base):
     )
 
 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String(320), nullable=False, unique=True, index=True)
+    password_hash = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 class PracticeSession(Base):
     __tablename__ = "practice_sessions"
     id = Column(Integer, primary_key=True, autoincrement=True)
     started_at = Column(DateTime, default=datetime.utcnow)
     score = Column(Integer, default=0)
     total = Column(Integer, default=0)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    user = relationship("User")
 
 
 class PracticeAnswer(Base):
@@ -70,3 +80,15 @@ class Mistake(Base):
     wrong_count = Column(Integer, default=1)
     last_wrong = Column(DateTime, default=datetime.utcnow)
     question = relationship("Question")
+
+
+class UserMistake(Base):
+    __tablename__ = "user_mistakes"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
+    wrong_count = Column(Integer, default=1)
+    last_wrong = Column(DateTime, default=datetime.utcnow)
+    user = relationship("User")
+    question = relationship("Question")
+    __table_args__ = (UniqueConstraint("user_id", "question_id", name="_user_question_mistake_uc"),)
