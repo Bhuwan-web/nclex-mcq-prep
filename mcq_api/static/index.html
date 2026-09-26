@@ -649,20 +649,69 @@
 				opacity: 1;
 			}
 		</style>
+		<style>
+			/* Account access */
+			.account-shell { max-width: 80rem; margin: 0 auto; padding: 1rem 1rem 0; }
+			.account-bar { display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; border:1px solid #dbe5ef; border-radius:1rem; background:#fff; box-shadow:0 8px 24px rgba(15,23,42,.05); }
+			.account-mark { display:grid; place-items:center; flex:none; width:2.75rem; height:2.75rem; border-radius:.85rem; color:#0f766e; background:#ecfdf5; }
+			.account-copy { min-width:0; flex:1; }
+			.account-copy strong { display:block; color:#172b4d; font-size:.95rem; }
+			.account-copy span { display:block; margin-top:.15rem; color:#64748b; font-size:.85rem; }
+			.auth-trigger { border:0; border-radius:.7rem; padding:.7rem 1rem; color:#fff; background:#155e75; font-weight:700; cursor:pointer; transition:background .2s, transform .2s; }
+			.auth-trigger:hover { background:#164e63; transform:translateY(-1px); }
+			.auth-trigger:focus-visible,.auth-close:focus-visible,.auth-submit:focus-visible,.password-toggle:focus-visible { outline:3px solid #38bdf8; outline-offset:3px; }
+			.auth-dialog { width:calc(100% - 2rem); max-width:28rem; padding:0; border:0; border-radius:1.25rem; box-shadow:0 24px 80px rgba(15,23,42,.28); color:#172b4d; }
+			.auth-dialog::backdrop { background:rgba(15,23,42,.56); backdrop-filter:blur(3px); }
+			.auth-content { padding:2rem; }
+			.auth-topline { display:flex; align-items:center; justify-content:space-between; }
+			.auth-brand { display:flex; align-items:center; gap:.6rem; color:#0f766e; font-size:.8rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+			.auth-brand i { font-size:1rem; }
+			.auth-close { display:grid; place-items:center; width:2.25rem; height:2.25rem; border:0; border-radius:50%; color:#64748b; background:#f1f5f9; cursor:pointer; }
+			.auth-heading { margin:1.5rem 0 .4rem; font-size:1.65rem; line-height:1.2; font-weight:800; color:#102a43; }
+			.auth-description { margin:0 0 1.5rem; color:#64748b; font-size:.92rem; line-height:1.5; }
+			.auth-field { display:block; margin:1rem 0; }
+			.auth-field label { display:block; margin-bottom:.45rem; color:#334155; font-size:.85rem; font-weight:700; }
+			.auth-field input { width:100%; min-height:2.9rem; border:1px solid #cbd5e1; border-radius:.65rem; padding:.7rem .8rem; color:#102a43; background:#fff; font-size:.95rem; }
+			.auth-field input:focus { border-color:#0e7490; outline:3px solid rgba(14,116,144,.14); }
+			.auth-field input[aria-invalid="true"] { border-color:#dc2626; }
+			.password-wrap { position:relative; }
+			.password-wrap input { padding-right:4rem; }
+			.password-toggle { position:absolute; top:50%; right:.65rem; transform:translateY(-50%); border:0; padding:.35rem; color:#0e7490; background:transparent; font-size:.8rem; font-weight:700; cursor:pointer; }
+			.auth-hint { display:block; margin-top:.4rem; color:#64748b; font-size:.78rem; }
+			.auth-error { margin:.8rem 0 0; color:#b91c1c; font-size:.85rem; line-height:1.4; }
+			.auth-submit { display:flex; align-items:center; justify-content:center; gap:.5rem; width:100%; min-height:3rem; margin-top:1.25rem; border:0; border-radius:.7rem; color:#fff; background:#155e75; font-weight:750; cursor:pointer; }
+			.auth-submit:hover { background:#164e63; }
+			.auth-submit:disabled { cursor:wait; opacity:.7; }
+			.auth-switch { margin:1.25rem 0 0; color:#64748b; text-align:center; font-size:.85rem; }
+			.auth-switch button { border:0; padding:.2rem; color:#0e7490; background:transparent; font-weight:750; cursor:pointer; }
+			.auth-trust { margin:1.3rem 0 0; padding-top:1rem; border-top:1px solid #e2e8f0; color:#64748b; font-size:.75rem; text-align:center; }
+			@media (max-width:600px) { .account-bar { align-items:flex-start; flex-wrap:wrap; padding:1rem; } .account-mark { width:2.4rem;height:2.4rem; } .account-bar .auth-trigger,.account-bar #auth-logout { width:100%; justify-content:center; } .auth-content { padding:1.5rem; } }
+		</style>
 	</head>
 	<body class="font-medical bg-gradient-to-br from-blue-50 via-white to-green-50 min-h-screen medical-pattern">
-		<section class="max-w-7xl mx-auto px-4 pt-4" aria-label="Account">
-			<div class="bg-white rounded-xl shadow-sm border border-blue-100 p-4 flex flex-wrap items-center gap-3">
-				<div id="auth-status" class="text-sm text-gray-600 flex-1">Sign in to save your practice history to your account.</div>
-				<div id="auth-controls" class="flex flex-wrap items-center gap-2">
-					<input id="auth-email" type="email" autocomplete="email" placeholder="Email" class="border rounded-lg px-3 py-2 text-sm" />
-					<input id="auth-password" type="password" autocomplete="current-password" placeholder="Password (8+ characters)" class="border rounded-lg px-3 py-2 text-sm" />
-					<button id="auth-login" type="button" class="btn-primary !py-2 !px-4">Sign in</button>
-					<button id="auth-register" type="button" class="btn-outline !py-2 !px-4">Create account</button>
-				</div>
+		<section class="account-shell" aria-label="Account">
+			<div class="account-bar">
+				<div class="account-mark" aria-hidden="true"><i class="fas fa-shield-heart"></i></div>
+				<div class="account-copy"><strong id="auth-title">Keep your progress in one place</strong><span id="auth-status">Sign in or create a free account to save practice history.</span></div>
+				<button id="auth-open" class="auth-trigger" type="button"><i class="fas fa-arrow-right-to-bracket mr-2" aria-hidden="true"></i>Sign in</button>
 				<button id="auth-logout" type="button" class="btn-outline !py-2 !px-4 hidden">Sign out</button>
 			</div>
 		</section>
+		<dialog id="auth-dialog" class="auth-dialog" aria-labelledby="auth-heading">
+			<div class="auth-content">
+				<div class="auth-topline"><div class="auth-brand"><i class="fas fa-stethoscope" aria-hidden="true"></i> NCLEX Practice Hub</div><button class="auth-close" id="auth-close" type="button" aria-label="Close sign in dialog"><i class="fas fa-times" aria-hidden="true"></i></button></div>
+				<h2 class="auth-heading" id="auth-heading">Welcome back</h2>
+				<p class="auth-description" id="auth-description">Sign in to pick up your practice and keep your progress saved.</p>
+				<form id="auth-form" novalidate>
+					<div class="auth-field"><label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required maxlength="320" /></div>
+					<div class="auth-field"><label for="auth-password">Password</label><div class="password-wrap"><input id="auth-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required minlength="8" maxlength="128" /><button class="password-toggle" id="password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show</button></div><small class="auth-hint" id="password-hint" hidden>Use at least 8 characters.</small></div>
+					<p class="auth-error" id="auth-error" role="alert" hidden></p>
+					<button id="auth-submit" class="auth-submit" type="submit"><span>Sign in</span><i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+				</form>
+				<p class="auth-switch"><span id="auth-switch-copy">New to the hub?</span> <button id="auth-switch" type="button">Create an account</button></p>
+				<p class="auth-trust"><i class="fas fa-lock mr-1" aria-hidden="true"></i>Your password is stored securely. We never share your study history.</p>
+			</div>
+		</dialog>
 		<!-- Navigation Header -->
 		<nav class="bg-white shadow-lg border-b-4 border-medical-blue sticky top-0 z-50">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -920,33 +969,102 @@
 					nativeFetch("/auth/me", { headers: { Authorization: `Bearer ${token}` } }).then((response) => {
 						if (!response.ok) throw new Error("Expired token");
 						return response.json();
-					}).then((user) => showAuthenticatedUser(user.email)).catch(() => {
+					}).then((user) => { if (user) showAuthenticatedUser(user.email); }).catch(() => {
 						localStorage.removeItem(ACCESS_TOKEN_KEY);
-						status.textContent = "Your sign in expired. Sign in again to save your practice history.";
+						document.getElementById("auth-title").textContent = "Your session has expired";
+						status.textContent = "Sign in again to keep your practice history saved.";
 					});
-				}
-				document.getElementById("auth-login").addEventListener("click", () => authenticate(false));
-				document.getElementById("auth-register").addEventListener("click", () => authenticate(true));
+			}
+				const dialog = document.getElementById("auth-dialog");
+				document.getElementById("auth-open").addEventListener("click", () => openAuthDialog(false));
+				document.getElementById("auth-close").addEventListener("click", () => dialog.close());
+				document.getElementById("auth-switch").addEventListener("click", () => setAuthMode(!authRegisterMode));
+				document.getElementById("auth-form").addEventListener("submit", (event) => { event.preventDefault(); authenticate(authRegisterMode); });
+				document.getElementById("password-toggle").addEventListener("click", togglePasswordVisibility);
+				dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
+				dialog.addEventListener("close", () => { document.getElementById("auth-error").hidden = true; });
 				document.getElementById("auth-logout").addEventListener("click", () => {
 					localStorage.removeItem(ACCESS_TOKEN_KEY);
 					window.location.reload();
 				});
 			}
 
+			let authRegisterMode = false;
+			function openAuthDialog(register) {
+				setAuthMode(register);
+				const dialog = document.getElementById("auth-dialog");
+				if (!dialog.open) dialog.showModal();
+				setTimeout(() => document.getElementById("auth-email").focus(), 0);
+			}
+
+			function setAuthMode(register) {
+				authRegisterMode = register;
+				const isRegister = register;
+				document.getElementById("auth-heading").textContent = isRegister ? "Create your account" : "Welcome back";
+				document.getElementById("auth-description").textContent = isRegister ? "Save your practice history and build a clearer picture of your progress." : "Sign in to pick up your practice and keep your progress saved.";
+				document.getElementById("auth-submit").querySelector("span").textContent = isRegister ? "Create account" : "Sign in";
+				document.getElementById("auth-switch-copy").textContent = isRegister ? "Already have an account?" : "New to the hub?";
+				document.getElementById("auth-switch").textContent = isRegister ? "Sign in" : "Create an account";
+				document.getElementById("auth-password").autocomplete = isRegister ? "new-password" : "current-password";
+				document.getElementById("password-hint").hidden = !isRegister;
+				clearAuthError();
+			}
+
+			function togglePasswordVisibility() {
+				const input = document.getElementById("auth-password");
+				const button = document.getElementById("password-toggle");
+				const visible = input.type === "password";
+				input.type = visible ? "text" : "password";
+				button.textContent = visible ? "Hide" : "Show";
+				button.setAttribute("aria-label", visible ? "Hide password" : "Show password");
+				button.setAttribute("aria-pressed", String(visible));
+			}
+
+			function clearAuthError() {
+				const error = document.getElementById("auth-error");
+				error.textContent = "";
+				error.hidden = true;
+				document.getElementById("auth-email").removeAttribute("aria-invalid");
+				document.getElementById("auth-password").removeAttribute("aria-invalid");
+			}
+
+			function showAuthError(message) {
+				const error = document.getElementById("auth-error");
+				error.textContent = message;
+				error.hidden = false;
+			}
+
 			async function authenticate(register) {
-				const email = document.getElementById("auth-email").value.trim();
-				const password = document.getElementById("auth-password").value;
-				const status = document.getElementById("auth-status");
+				const emailInput = document.getElementById("auth-email");
+				const passwordInput = document.getElementById("auth-password");
+				const email = emailInput.value.trim();
+				const password = passwordInput.value;
+				const submit = document.getElementById("auth-submit");
+				clearAuthError();
+				if (!email || !emailInput.checkValidity()) {
+					emailInput.setAttribute("aria-invalid", "true");
+					showAuthError("Enter a valid email address to continue.");
+					emailInput.focus();
+					return;
+				}
+				if (password.length < 8) {
+					passwordInput.setAttribute("aria-invalid", "true");
+					showAuthError("Your password must be at least 8 characters.");
+					passwordInput.focus();
+					return;
+				}
+				submit.disabled = true;
+				submit.querySelector("span").textContent = register ? "Creating account…" : "Signing in…";
 				try {
 					if (register) {
 						const response = await nativeFetch("/auth/register", {
 							method: "POST",
-						headers: { "Content-Type": "application/json" },
+							headers: { "Content-Type": "application/json" },
 							body: JSON.stringify({ email, password }),
 						});
 						if (!response.ok) {
-							const result = await response.json();
-							throw new Error(result.detail || "Could not create account");
+							const result = await response.json().catch(() => ({}));
+							throw new Error(result.detail || "Could not create your account. Please try again.");
 						}
 					}
 					const form = new URLSearchParams({ username: email, password });
@@ -955,18 +1073,23 @@
 						headers: { "Content-Type": "application/x-www-form-urlencoded" },
 						body: form,
 					});
-					const result = await response.json();
-					if (!response.ok) throw new Error(result.detail || "Sign in failed");
+					const result = await response.json().catch(() => ({}));
+					if (!response.ok) throw new Error(result.detail || "Sign in failed. Check your email and password.");
 					localStorage.setItem(ACCESS_TOKEN_KEY, result.access_token);
 					window.location.reload();
 				} catch (error) {
-					status.textContent = error.message;
+					const message = error.message === "Incorrect email or password" ? "That email and password combination was not recognized. Try again or create an account." : error.message === "An account with this email already exists" ? "An account already exists for this email. Sign in instead." : error.message;
+					showAuthError(message);
+				} finally {
+					submit.disabled = false;
+					submit.querySelector("span").textContent = register ? "Create account" : "Sign in";
 				}
 			}
 
 			function showAuthenticatedUser(email) {
-				document.getElementById("auth-status").textContent = `Signed in as ${email}. Your practice history is saved to your account.`;
-				document.getElementById("auth-controls").classList.add("hidden");
+				document.getElementById("auth-title").textContent = "Your progress is being saved";
+				document.getElementById("auth-status").textContent = `Signed in as ${email}. Your practice history is linked to your account.`;
+				document.getElementById("auth-open").classList.add("hidden");
 				document.getElementById("auth-logout").classList.remove("hidden");
 			}
 
