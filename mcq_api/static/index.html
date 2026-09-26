@@ -685,6 +685,11 @@
 			.auth-switch { margin:1.25rem 0 0; color:#64748b; text-align:center; font-size:.85rem; }
 			.auth-switch button { border:0; padding:.2rem; color:#0e7490; background:transparent; font-weight:750; cursor:pointer; }
 			.auth-trust { margin:1.3rem 0 0; padding-top:1rem; border-top:1px solid #e2e8f0; color:#64748b; font-size:.75rem; text-align:center; }
+			#application[hidden] { display:none !important; }
+			body.authenticated .account-shell { display:none; }
+			body.auth-gate { background:linear-gradient(135deg,#eff6ff,#fff 55%,#ecfdf5); }
+			body.auth-gate .auth-dialog { margin:auto; }
+			body.auth-gate .account-shell { display:none; }
 			@media (max-width:600px) { .account-bar { align-items:flex-start; flex-wrap:wrap; padding:1rem; } .account-mark { width:2.4rem;height:2.4rem; } .account-bar .auth-trigger,.account-bar #auth-logout { width:100%; justify-content:center; } .auth-content { padding:1.5rem; } }
 		</style>
 	</head>
@@ -694,7 +699,6 @@
 				<div class="account-mark" aria-hidden="true"><i class="fas fa-shield-heart"></i></div>
 				<div class="account-copy"><strong id="auth-title">Keep your progress in one place</strong><span id="auth-status">Sign in or create a free account to save practice history.</span></div>
 				<button id="auth-open" class="auth-trigger" type="button"><i class="fas fa-arrow-right-to-bracket mr-2" aria-hidden="true"></i>Sign in</button>
-				<button id="auth-logout" type="button" class="btn-outline !py-2 !px-4 hidden">Sign out</button>
 			</div>
 		</section>
 		<dialog id="auth-dialog" class="auth-dialog" aria-labelledby="auth-heading">
@@ -712,6 +716,7 @@
 				<p class="auth-trust"><i class="fas fa-lock mr-1" aria-hidden="true"></i>Your password is stored securely. We never share your study history.</p>
 			</div>
 		</dialog>
+		<div id="application" hidden>
 		<!-- Navigation Header -->
 		<nav class="bg-white shadow-lg border-b-4 border-medical-blue sticky top-0 z-50">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -734,8 +739,8 @@
 							<i class="fas fa-clock"></i>
 							<span id="current-time"></span>
 						</div>
-						<button class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
-							<i class="fas fa-user-circle text-medical-blue text-xl"></i>
+						<button id="auth-logout" type="button" class="btn-outline !py-2 !px-4">
+							<i class="fas fa-arrow-right-from-bracket mr-2" aria-hidden="true"></i>Sign out
 						</button>
 					</div>
 				</div>
@@ -932,6 +937,7 @@
 				</div>
 			</div>
 		</div>
+		</div>
 
 		<script>
 			const ACCESS_TOKEN_KEY = "nclex_access_token";
@@ -953,40 +959,51 @@
 			let currentTheme = "light";
 
 			// Initialize the application
-			document.addEventListener("DOMContentLoaded", function () {
-				initializeAuth();
+			document.addEventListener("DOMContentLoaded", async function () {
+				if (!(await initializeAuth())) return;
+				document.body.classList.add("authenticated");
+				document.body.classList.remove("auth-gate");
+				document.getElementById("application").hidden = false;
 				initializeApp();
 				setupEventListeners();
 				updateClock();
 				setInterval(updateClock, 1000);
 			});
 
-			function initializeAuth() {
+			async function initializeAuth() {
 				const token = localStorage.getItem(ACCESS_TOKEN_KEY);
 				const status = document.getElementById("auth-status");
-				if (token) {
-					status.textContent = "Checking your account…";
-					nativeFetch("/auth/me", { headers: { Authorization: `Bearer ${token}` } }).then((response) => {
-						if (!response.ok) throw new Error("Expired token");
-						return response.json();
-					}).then((user) => { if (user) showAuthenticatedUser(user.email); }).catch(() => {
-						localStorage.removeItem(ACCESS_TOKEN_KEY);
-						document.getElementById("auth-title").textContent = "Your session has expired";
-						status.textContent = "Sign in again to keep your practice history saved.";
-					});
-			}
 				const dialog = document.getElementById("auth-dialog");
+				document.body.classList.add("auth-gate");
 				document.getElementById("auth-open").addEventListener("click", () => openAuthDialog(false));
-				document.getElementById("auth-close").addEventListener("click", () => dialog.close());
+				document.getElementById("auth-close").addEventListener("click", () => { if (localStorage.getItem(ACCESS_TOKEN_KEY)) dialog.close(); });
 				document.getElementById("auth-switch").addEventListener("click", () => setAuthMode(!authRegisterMode));
 				document.getElementById("auth-form").addEventListener("submit", (event) => { event.preventDefault(); authenticate(authRegisterMode); });
 				document.getElementById("password-toggle").addEventListener("click", togglePasswordVisibility);
-				dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
+				dialog.addEventListener("click", (event) => { if (event.target === dialog && localStorage.getItem(ACCESS_TOKEN_KEY)) dialog.close(); });
 				dialog.addEventListener("close", () => { document.getElementById("auth-error").hidden = true; });
 				document.getElementById("auth-logout").addEventListener("click", () => {
 					localStorage.removeItem(ACCESS_TOKEN_KEY);
 					window.location.reload();
 				});
+				if (token) {
+					status.textContent = "Checking your account…";
+					try {
+						const response = await nativeFetch("/auth/me", { headers: { Authorization: `Bearer ${token}` } });
+						if (!response.ok) throw new Error("Expired token");
+						const user = await response.json();
+						showAuthenticatedUser(user.email);
+						return true;
+					} catch {
+						localStorage.removeItem(ACCESS_TOKEN_KEY);
+						document.getElementById("auth-title").textContent = "Your session has expired";
+						status.textContent = "Sign in again to keep your practice history saved.";
+					}
+				}
+				setAuthMode(false);
+				dialog.showModal();
+				setTimeout(() => document.getElementById("auth-email").focus(), 0);
+				return false;
 			}
 
 			let authRegisterMode = false;
@@ -1208,6 +1225,7 @@
 				try {
 					showLoadingStats();
 					const response = await fetch("/stats/");
+					if (!response.ok) throw new Error(`Stats request failed (${response.status})`);
 					const stats = await response.json();
 
 					document.getElementById("stats").innerHTML = `
