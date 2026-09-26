@@ -37,11 +37,10 @@ A comprehensive web-based practice platform for NCLEX-RN (National Council Licen
 docker compose up -d --build
 ```
 
-Open `http://localhost:8000`. If `data_loader/nclex_simple.db` is present, Docker
-copies it to `data/nclex_simple.db` on first start. The `data/` directory keeps
-practice progress across container restarts. If the seed database is absent,
-the app starts with an empty database; follow the manual data extraction steps
-below to add questions.
+Open `http://localhost:8000`. On first start, Docker copies the bundled
+`data_loader/nclex_simple.db` into the `nclex_data` volume. The volume keeps
+practice progress across container restarts. Do not use `docker compose down -v`
+unless you want to delete saved progress.
 
 ### Option 2: Manual Installation
 

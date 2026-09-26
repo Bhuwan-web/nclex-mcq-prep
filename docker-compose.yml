@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   nclex-practice:
     build: .
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/data
+      - nclex_data:/app/data
     environment:
       - PORT=8000
       - PYTHONPATH=/app
@@ -28,3 +26,6 @@ services:
   #   depends_on:
   #     - nclex-practice
   #   restart: unless-stopped
+
+volumes:
+  nclex_data:
