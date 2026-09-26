@@ -68,3 +68,4 @@ docs/
 .qodo/
 node_modules/
 *.pdf
+data/

@@ -4,7 +4,8 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8000
+    PORT=8000 \
+    DATABASE_URL=sqlite:////app/data/nclex_simple.db
 
 # Set work directory
 WORKDIR /app
@@ -29,15 +30,13 @@ COPY . /app/
 # Create data directory for database
 RUN mkdir -p /app/data
 
-# Copy database if it exists, otherwise create empty directory
-COPY data_loader/nclex_simple.db* /app/ 2>/dev/null || true
-
 # Expose port
 EXPOSE $PORT
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:$PORT/health')" || exit 1
+    CMD python -c "from urllib.request import urlopen; urlopen('http://localhost:8000/health', timeout=5).close()" || exit 1
 
 # Run the application
+ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
 CMD ["python", "-m", "uvicorn", "mcq_api.main:app", "--host", "0.0.0.0", "--port", "8000"]

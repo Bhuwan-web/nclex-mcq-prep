@@ -33,14 +33,15 @@ A comprehensive web-based practice platform for NCLEX-RN (National Council Licen
 ### Option 1: Docker (Recommended)
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd nclex-practice-hub
-
-# Build and run with Docker
-docker build -t nclex-practice .
-docker run -p 8000:8000 nclex-practice
+# From the project directory, build and start the app
+docker compose up -d --build
 ```
+
+Open `http://localhost:8000`. If `data_loader/nclex_simple.db` is present, Docker
+copies it to `data/nclex_simple.db` on first start. The `data/` directory keeps
+practice progress across container restarts. If the seed database is absent,
+the app starts with an empty database; follow the manual data extraction steps
+below to add questions.
 
 ### Option 2: Manual Installation
 

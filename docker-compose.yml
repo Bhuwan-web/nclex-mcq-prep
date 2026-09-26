@@ -6,16 +6,13 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Mount data directory for persistent database storage
       - ./data:/app/data
-      # Mount database file if it exists
-      - ./data_loader/nclex_simple.db:/app/nclex_simple.db:ro
     environment:
       - PORT=8000
       - PYTHONPATH=/app
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://localhost:8000/health', timeout=5).close()"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -31,7 +28,3 @@ services:
   #   depends_on:
   #     - nclex-practice
   #   restart: unless-stopped
-
-volumes:
-  data:
-    driver: local
